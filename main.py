@@ -13,10 +13,15 @@ def main() -> int:
     with open(SRC, "r", encoding="utf-8") as f:
         text = f.read()
     # Guard: the gate is 1-180 chars of UTF-8, not only whitespace, one line.
+    # Measure the actual entry content (stripped), not the raw file bytes.
     stripped = text.strip()
-    if not 1 <= len(text) <= 180 or not stripped or "\n" in stripped:
+    if not 1 <= len(stripped) <= 180 or not stripped or "\n" in stripped:
         print("entry fails gate: must be 1-180 chars, not only whitespace, one line",
               file=sys.stderr)
+        return 1
+    # Reject control characters (e.g. \r, \t) so the entry stays one clean line.
+    if any(ord(ch) < 0x20 for ch in stripped):
+        print("entry fails gate: control characters not allowed", file=sys.stderr)
         return 1
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     shutil.copyfile(SRC, OUT)
